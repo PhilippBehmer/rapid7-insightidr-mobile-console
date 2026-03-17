@@ -1,0 +1,93 @@
+name: Docker Publish
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      IMAGE_NAME: ${{ vars.DOCKERHUB_REPOSITORY != '' && vars.DOCKERHUB_REPOSITORY || 'local/pocketsoc' }}
+      DOCKERHUB_PUBLISH_ENABLED: ${{ github.event_name == 'push' && vars.DOCKERHUB_REPOSITORY != '' && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Announce skipped Docker Hub publish
+        if: github.event_name == 'push' && env.DOCKERHUB_PUBLISH_ENABLED != 'true'
+        run: |
+          echo "Docker Hub publishing skipped because DOCKERHUB_REPOSITORY, DOCKERHUB_USERNAME, or DOCKERHUB_TOKEN is not configured."
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: env.DOCKERHUB_PUBLISH_ENABLED == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=short,prefix=sha-
+
+      - name: Build and optionally push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ env.DOCKERHUB_PUBLISH_ENABLED == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,0 +1,18 @@
+services:
+  pocketsoc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKERHUB_REPOSITORY:-pocketsoc:local}
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      IDR_CONFIG_FILE: /app/data/config.json
+      IDR_SESSION_SECRET: ${IDR_SESSION_SECRET:?Set IDR_SESSION_SECRET before starting the container}
+    volumes:
+      - pocketsoc-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  pocketsoc-data:

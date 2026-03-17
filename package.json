@@ -1,0 +1,7 @@
+{
+  "name": "idr-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "./scripts/dev.sh"
+  }
+}
