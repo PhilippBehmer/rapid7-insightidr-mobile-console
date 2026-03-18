@@ -65,35 +65,51 @@ Environment variables:
 
 ### Alerts Desktop
 
-![PocketSOC alerts desktop view](docs/screenshots/01-PocketSOC-Alerts-Desktop.png)
+<p align="center">
+  <img src="docs/screenshots/01-PocketSOC-Alerts-Desktop.png" alt="PocketSOC alerts desktop view">
+</p>
 
 ### Alerts Mobile
 
-![PocketSOC alerts mobile view](docs/screenshots/02-PocketSOC-Alerts-Mobile.png)
+<p align="center">
+  <img src="docs/screenshots/02-PocketSOC-Alerts-Mobile.png" alt="PocketSOC alerts mobile view">
+</p>
 
 ### Alert Stacking
 
-![PocketSOC hybrid alert stack view](docs/screenshots/03-PocketSOC-Alerts-Hybrid-Stack.png)
+<p align="center">
+  <img src="docs/screenshots/03-PocketSOC-Alerts-Hybrid-Stack.png" alt="PocketSOC hybrid alert stack view">
+</p>
 
 ### Alert Details and Triage Pivots
 
-![PocketSOC alert details and triage pivots](docs/screenshots/04-PocketSOC-Alert-Details+Triage-Pivots.png)
+<p align="center">
+  <img src="docs/screenshots/04-PocketSOC-Alert-Details+Triage-Pivots.png" alt="PocketSOC alert details and triage pivots">
+</p>
 
 ### Automatic Base64 Decoding
 
-![PocketSOC base64 alert workflow](docs/screenshots/05-PocketSOC-Alert-Base64.png)
+<p align="center">
+  <img src="docs/screenshots/05-PocketSOC-Alert-Base64.png" alt="PocketSOC base64 alert workflow">
+</p>
 
 ### Investigation Overview
 
-![PocketSOC investigation overview](docs/screenshots/06-PocketSOC-Investigation-Overview.png)
+<p align="center">
+  <img src="docs/screenshots/06-PocketSOC-Investigation-Overview.png" alt="PocketSOC investigation overview">
+</p>
 
 ### Investigation Details
 
-![PocketSOC investigation details](docs/screenshots/07-PocketSOC-Investigation-Details.png)
+<p align="center">
+  <img src="docs/screenshots/07-PocketSOC-Investigation-Details.png" alt="PocketSOC investigation details">
+</p>
 
 ### Health Overview
 
-![PocketSOC health overview](docs/screenshots/08-PocketSOC-Health-Overview.png)
+<p align="center">
+  <img src="docs/screenshots/08-PocketSOC-Health-Overview.png" alt="PocketSOC health overview">
+</p>
 
 ## Manual Installation
 
