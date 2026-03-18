@@ -2,6 +2,10 @@
 
 PocketSOC is a mobile-first InsightIDR companion for alert triage and investigation workflows.
 
+> Disclaimer: PocketSOC is a community project and is not officially supported, endorsed, or maintained by Rapid7.
+
+## Architecture
+
 - `backend/` is an Express proxy and normalization layer for Rapid7 InsightIDR APIs.
 - `frontend/` is a framework-free Vite app tuned for phone-sized alert review and case response.
 - The production container serves both layers from the same origin on port `3000`.
@@ -13,6 +17,40 @@ PocketSOC is a mobile-first InsightIDR companion for alert triage and investigat
 - Alert detail enrichment for evidences, actors, process trees, rule summaries, MITRE, logsets, and event sources.
 - Investigation detail workflows for status/priority/disposition changes, reassignment, comments, and attachments.
 - Docker image and GitHub Actions workflow for CI plus optional Docker Hub publishing.
+
+## Screenshots
+
+### Alerts Desktop
+
+![PocketSOC alerts desktop view](docs/screenshots/01-PocketSOC-Alerts-Desktop.png)
+
+### Alerts Mobile
+
+![PocketSOC alerts mobile view](docs/screenshots/02-PocketSOC-Alerts-Mobile.png)
+
+### Alert Stacking
+
+![PocketSOC hybrid alert stack view](docs/screenshots/03-PocketSOC-Alerts-Hybrid-Stack.png)
+
+### Alert Details and Triage Pivots
+
+![PocketSOC alert details and triage pivots](docs/screenshots/04-PocketSOC-Alert-Details+Triage-Pivots.png)
+
+### Automatic Base64 Decoding
+
+![PocketSOC base64 alert workflow](docs/screenshots/05-PocketSOC-Alert-Base64.png)
+
+### Investigation Overview
+
+![PocketSOC investigation overview](docs/screenshots/06-PocketSOC-Investigation-Overview.png)
+
+### Investigation Details
+
+![PocketSOC investigation details](docs/screenshots/07-PocketSOC-Investigation-Details.png)
+
+### Health Overview
+
+![PocketSOC health overview](docs/screenshots/08-PocketSOC-Health-Overview.png)
 
 ## Quick Start
 
