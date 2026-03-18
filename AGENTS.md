@@ -12,7 +12,7 @@
 - `backend/local/config.json`: default local runtime session store persisted by the backend. It keeps encrypted per-browser config blobs plus session metadata, so treat it as sensitive local state.
 - `backend/local/session-secret.hex`: default local encryption secret path generated when `POCKETSOC_SESSION_SECRET` is not set and `POCKETSOC_SESSION_SECRET_FILE` is not overridden. Never commit it.
 - `Dockerfile`: multi-stage production image that builds the Vite frontend, installs backend production dependencies, and serves the app from the backend on port `3000`.
-- `compose.yaml`: local container runtime example for the published Docker Hub image, with a named volume mounted at `/app/data` for persisted session state; the auto-generated session secret follows that same directory by default.
+- `docker-compose.yml`: local container runtime example for the published Docker Hub image, with a named volume mounted at `/app/data` for persisted session state; the auto-generated session secret follows that same directory by default.
 - `.github/workflows/docker-publish.yml`: CI workflow that runs the backend/frontend checks on pull requests and publishes a multi-arch Docker Hub image on pushes to `main`.
 - `.env.example`: local environment template for optional overrides; PocketSOC already defaults persisted session state to `backend/local/`, the auto-generated secret follows that same directory by default, and backend `PORT` remains intentionally omitted because normal user flows should rely on the default internal port.
 - `.gitignore` and `.dockerignore`: release hygiene files; keep custom session-state paths and local secrets ignored when examples or persistence paths change.
@@ -31,7 +31,7 @@
 - `POCKETSOC_CONFIG_FILE` can override the default `backend/local/config.json` path for isolated local test runs.
 - `POCKETSOC_SESSION_SECRET_FILE` can override the generated-secret path explicitly; otherwise the backend writes `session-secret.hex` next to `POCKETSOC_CONFIG_FILE`.
 - `POCKETSOC_SESSION_SECRET` can provide the encryption secret for stored session configs; otherwise the backend generates a local secret file at the derived or overridden path.
-- `POCKETSOC_ATTACHMENT_MAX_BYTES` can cap proxied attachment uploads; the default is `26214400` (25 MiB).
+- `POCKETSOC_ATTACHMENT_MAX_BYTES` can cap proxied attachment uploads; the default is `50000000` (50 MB).
 - `POCKETSOC_FORCE_SECURE_COOKIE=true` forces the session cookie to include `Secure`; this is mainly for TLS-terminating proxy setups where HTTPS is not detected from the request itself.
 - `GET /api/config` intentionally returns only booleans plus `region`; it never returns raw keys.
 - `POST /api/config` only overwrites fields that are present and non-empty, so blank inputs do not clear saved keys for the current browser session.
