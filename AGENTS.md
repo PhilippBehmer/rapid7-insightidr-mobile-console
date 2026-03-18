@@ -5,15 +5,16 @@
 - `backend/` is an Express proxy and normalization layer for Rapid7 InsightIDR APIs.
 - `frontend/` is a Vite-built, framework-free mobile-oriented UI branded as PocketSOC.
 - The app is designed around alert triage and investigation workflows, not generic CRUD.
+- `AGENTS.md` is pushed to GitHub; treat it as public operational documentation and never include real secrets, customer identifiers, internal-only URLs, or environment-specific sensitive values.
 
 ## Project Structure & Ownership
 - `backend/server.js`: all backend routes, config persistence, Rapid7 proxy logic, response shaping, and small in-memory caches.
-- `backend/config.json`: local runtime session store persisted by the backend. It now keeps encrypted per-browser config blobs plus session metadata, so treat it as sensitive local state.
-- `backend/session-secret.hex`: local encryption secret generated when `IDR_SESSION_SECRET` is not set. Never commit it.
+- `backend/local/config.json`: default local runtime session store persisted by the backend. It keeps encrypted per-browser config blobs plus session metadata, so treat it as sensitive local state.
+- `backend/local/session-secret.hex`: default local encryption secret path generated when `POCKETSOC_SESSION_SECRET` is not set and `POCKETSOC_SESSION_SECRET_FILE` is not overridden. Never commit it.
 - `Dockerfile`: multi-stage production image that builds the Vite frontend, installs backend production dependencies, and serves the app from the backend on port `3000`.
-- `compose.yaml`: local container runtime example with a named volume mounted at `/app/data` for persisted session state.
+- `compose.yaml`: local container runtime example for the published Docker Hub image, with a named volume mounted at `/app/data` for persisted session state; the auto-generated session secret follows that same directory by default.
 - `.github/workflows/docker-publish.yml`: CI workflow that runs the backend/frontend checks on pull requests and publishes a multi-arch Docker Hub image on pushes to `main`.
-- `.env.example`: local environment template that now points custom persisted session state at `backend/local/config.json`.
+- `.env.example`: local environment template for optional overrides; PocketSOC already defaults persisted session state to `backend/local/`, the auto-generated secret follows that same directory by default, and backend `PORT` remains intentionally omitted because normal user flows should rely on the default internal port.
 - `.gitignore` and `.dockerignore`: release hygiene files; keep custom session-state paths and local secrets ignored when examples or persistence paths change.
 - `frontend/main.js`: `MainApp` singleton, view templates, event wiring, fetch orchestration, overlay navigation, and client-side state.
 - `frontend/components.js`: HTML rendering helpers for lists, detail panels, badges, forms, and empty states.
@@ -27,9 +28,11 @@
 - Each browser gets its own remembered session backed by a secure `HttpOnly` cookie and a stored config shaped like `{ apiKey, platformUserApiKey, region }`.
 - The settings screen currently exposes only the primary `apiKey` plus `region`; `platformUserApiKey` remains backend-only legacy state until Rapid7 platform-user lookup behavior is clarified.
 - In production container runs, the Express backend serves the built frontend from `frontend/dist` on the same origin as `/api` when `NODE_ENV=production`.
-- `IDR_CONFIG_FILE` can override the default `backend/config.json` path for isolated local test runs.
-- `IDR_SESSION_SECRET` can provide the encryption secret for stored session configs; otherwise the backend generates `backend/session-secret.hex` locally.
-- `IDR_ATTACHMENT_MAX_BYTES` can cap proxied attachment uploads; the default is `26214400` (25 MiB).
+- `POCKETSOC_CONFIG_FILE` can override the default `backend/local/config.json` path for isolated local test runs.
+- `POCKETSOC_SESSION_SECRET_FILE` can override the generated-secret path explicitly; otherwise the backend writes `session-secret.hex` next to `POCKETSOC_CONFIG_FILE`.
+- `POCKETSOC_SESSION_SECRET` can provide the encryption secret for stored session configs; otherwise the backend generates a local secret file at the derived or overridden path.
+- `POCKETSOC_ATTACHMENT_MAX_BYTES` can cap proxied attachment uploads; the default is `26214400` (25 MiB).
+- `POCKETSOC_FORCE_SECURE_COOKIE=true` forces the session cookie to include `Secure`; this is mainly for TLS-terminating proxy setups where HTTPS is not detected from the request itself.
 - `GET /api/config` intentionally returns only booleans plus `region`; it never returns raw keys.
 - `POST /api/config` only overwrites fields that are present and non-empty, so blank inputs do not clear saved keys for the current browser session.
 - `POST /api/config` trims API-key fields before deciding whether they are usable, so whitespace-only values are treated as unset.
@@ -111,7 +114,8 @@
 - Repo root convenience command:
 - `npm run dev` starts both `backend/node server.js` and `frontend/npm run dev`; stop both with `Ctrl+C`
 - `docker build -t pocketsoc:local .`
-- `export IDR_SESSION_SECRET=replace-with-a-long-random-secret && docker compose up --build`
+- `docker pull philippbehmer/rapid7-insightidr-mobile-console:latest`
+- `docker compose pull && docker compose up -d`
 - Run commands from the relevant app directory.
 - `cd backend && npm install`
 - `cd backend && npm run dev`
@@ -155,19 +159,26 @@
 
 ## Security & Repo Hygiene
 - Never commit real API keys or repeat them in docs, code comments, screenshots, or task notes.
-- `backend/config.json` and `backend/session-secret.hex` are local runtime secrets/state and should use sanitized values before commits or sharing.
-- `backend/local/` is the recommended place for alternate local persisted session state; keep that directory ignored if examples or tooling change.
-- The backend tightens local permissions on `backend/config.json` and `backend/session-secret.hex` to owner-only (`0600`) when it reads or writes them.
+- `backend/local/config.json` and `backend/local/session-secret.hex` are local runtime secrets/state and should use sanitized values before commits or sharing.
+- `backend/local/` is the recommended place for alternate local persisted session state; auto-generated secrets will follow that directory by default, so keep it ignored if examples or tooling change.
+- The backend tightens local permissions on `backend/local/config.json`, `backend/local/session-secret.hex`, and overridden secret/config paths to owner-only (`0600`) when it reads or writes them.
 - Prefer environment-based secrets for shared environments when extending deployment support.
-- For container deployments, keep `IDR_SESSION_SECRET` outside the image and pair it with a persistent volume-backed `IDR_CONFIG_FILE` path so remembered browser sessions survive restarts.
+- For container deployments, either provide `POCKETSOC_SESSION_SECRET` outside the image or persist `POCKETSOC_CONFIG_FILE` on a volume so the generated sibling `session-secret.hex` survives restarts as well; override `POCKETSOC_SESSION_SECRET_FILE` only when a separate location is required.
 - The production container now runs as an unprivileged `pocketsoc` user; preserve that when editing `Dockerfile` or Compose examples.
 - Docker Hub publishing relies on GitHub secrets `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, and the repository variable `DOCKERHUB_REPOSITORY`; treat those as deployment configuration, not source-controlled values.
 - The Docker publish workflow now skips registry login/push when those GitHub settings are missing instead of failing the whole push build.
-- `.gitignore` should keep `backend/config.json`, `backend/session-secret.hex`, env files, and other sensitive local artifacts out of source control.
+- `.gitignore` and `.dockerignore` should keep `backend/local/`, env files, and other sensitive local artifacts out of source control.
 
 ## Public Release Checklist
+- The project is currently published without a root `LICENSE` file; keep repo guidance and release notes consistent with that state until the licensing decision changes.
 - Keep `README.md`, `.env.example`, `.gitignore`, `.dockerignore`, and `.github/workflows/docker-publish.yml` aligned when changing setup or persistence guidance.
-- Confirm a root `LICENSE` file exists before making the repository public; package-level license fields alone are not enough for a GitHub release.
+- Re-read `README.md` before release and verify documented commands, environment variables, image names, ports, and persistence guidance still work as written.
+- Sanitize screenshots, sample values, local runtime state, and any shared config artifacts before release so no API keys, tenant identifiers, or sensitive investigation data are exposed.
+- Confirm `.gitignore` and `.dockerignore` still exclude `backend/local/`, env files, logs, and other sensitive local artifacts after any setup or deployment changes.
+- Run `cd backend && npm test` and `cd frontend && npm test` before release.
+- Run `docker build -t pocketsoc:local .` and a basic container smoke test for the documented Docker flow before release.
+- Confirm GitHub Actions and Docker Hub publishing settings still match the intended public release behavior, including the optional-skip path when registry secrets or variables are unset.
+- Verify screenshots, branding, and disclaimer text are still safe for public distribution and do not imply official Rapid7 support beyond the stated community-project disclaimer.
 
 ## Commit & Pull Request Guidelines
 - Local git history is not available in this workspace, so use this baseline convention:

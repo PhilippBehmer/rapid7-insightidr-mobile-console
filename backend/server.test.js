@@ -10,24 +10,34 @@ const SERVER_MODULE_PATH = require.resolve('./server');
 
 async function loadTestApp(t, options = {}) {
     const {
-        useSessionSecretEnv = true,
-        nodeEnv
+        sessionSecretMode = 'env',
+        nodeEnv,
+        forceSecureCookie = false
     } = options;
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'idr-backend-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pocketsoc-backend-test-'));
     const configFile = path.join(tempDir, 'config.json');
     const sessionSecretFile = path.join(tempDir, 'session-secret.hex');
-    const previousConfigFile = process.env.IDR_CONFIG_FILE;
-    const previousSessionSecret = process.env.IDR_SESSION_SECRET;
-    const previousSessionSecretFile = process.env.IDR_SESSION_SECRET_FILE;
+    const previousConfigFile = process.env.POCKETSOC_CONFIG_FILE;
+    const previousSessionSecret = process.env.POCKETSOC_SESSION_SECRET;
+    const previousSessionSecretFile = process.env.POCKETSOC_SESSION_SECRET_FILE;
+    const previousForceSecureCookie = process.env.POCKETSOC_FORCE_SECURE_COOKIE;
     const previousNodeEnv = process.env.NODE_ENV;
 
-    process.env.IDR_CONFIG_FILE = configFile;
-    if (useSessionSecretEnv) {
-        process.env.IDR_SESSION_SECRET = 'test-session-secret';
-        delete process.env.IDR_SESSION_SECRET_FILE;
+    process.env.POCKETSOC_CONFIG_FILE = configFile;
+    if (sessionSecretMode === 'env') {
+        process.env.POCKETSOC_SESSION_SECRET = 'test-session-secret';
+        delete process.env.POCKETSOC_SESSION_SECRET_FILE;
+    } else if (sessionSecretMode === 'file') {
+        delete process.env.POCKETSOC_SESSION_SECRET;
+        process.env.POCKETSOC_SESSION_SECRET_FILE = sessionSecretFile;
     } else {
-        delete process.env.IDR_SESSION_SECRET;
-        process.env.IDR_SESSION_SECRET_FILE = sessionSecretFile;
+        delete process.env.POCKETSOC_SESSION_SECRET;
+        delete process.env.POCKETSOC_SESSION_SECRET_FILE;
+    }
+    if (forceSecureCookie) {
+        process.env.POCKETSOC_FORCE_SECURE_COOKIE = 'true';
+    } else {
+        delete process.env.POCKETSOC_FORCE_SECURE_COOKIE;
     }
     if (nodeEnv === undefined) {
         delete process.env.NODE_ENV;
@@ -47,21 +57,27 @@ async function loadTestApp(t, options = {}) {
         delete require.cache[SERVER_MODULE_PATH];
 
         if (previousConfigFile === undefined) {
-            delete process.env.IDR_CONFIG_FILE;
+            delete process.env.POCKETSOC_CONFIG_FILE;
         } else {
-            process.env.IDR_CONFIG_FILE = previousConfigFile;
+            process.env.POCKETSOC_CONFIG_FILE = previousConfigFile;
         }
 
         if (previousSessionSecret === undefined) {
-            delete process.env.IDR_SESSION_SECRET;
+            delete process.env.POCKETSOC_SESSION_SECRET;
         } else {
-            process.env.IDR_SESSION_SECRET = previousSessionSecret;
+            process.env.POCKETSOC_SESSION_SECRET = previousSessionSecret;
         }
 
         if (previousSessionSecretFile === undefined) {
-            delete process.env.IDR_SESSION_SECRET_FILE;
+            delete process.env.POCKETSOC_SESSION_SECRET_FILE;
         } else {
-            process.env.IDR_SESSION_SECRET_FILE = previousSessionSecretFile;
+            process.env.POCKETSOC_SESSION_SECRET_FILE = previousSessionSecretFile;
+        }
+
+        if (previousForceSecureCookie === undefined) {
+            delete process.env.POCKETSOC_FORCE_SECURE_COOKIE;
+        } else {
+            process.env.POCKETSOC_FORCE_SECURE_COOKIE = previousForceSecureCookie;
         }
 
         if (previousNodeEnv === undefined) {
@@ -447,7 +463,14 @@ test('config endpoint ignores whitespace-only keys instead of treating them as c
 });
 
 test('generated session secret files are written with restrictive permissions', async t => {
-    const { sessionSecretFile } = await loadTestApp(t, { useSessionSecretEnv: false });
+    const { sessionSecretFile } = await loadTestApp(t, { sessionSecretMode: 'file' });
+    const secretStats = await fs.stat(sessionSecretFile);
+
+    assert.equal(secretStats.mode & 0o777, 0o600);
+});
+
+test('generated session secret defaults to the config directory when no override is provided', async t => {
+    const { sessionSecretFile } = await loadTestApp(t, { sessionSecretMode: 'auto' });
     const secretStats = await fs.stat(sessionSecretFile);
 
     assert.equal(secretStats.mode & 0o777, 0o600);
@@ -468,6 +491,16 @@ test('malformed session cookies are ignored instead of crashing the request pipe
         hasPlatformUserApiKey: false,
         region: 'us'
     });
+});
+
+test('force secure cookie env adds the Secure flag even for non-https requests', async t => {
+    const { baseUrl } = await loadTestApp(t, { forceSecureCookie: true });
+
+    const response = await fetch(`${baseUrl}/api/config`);
+    const setCookieHeader = getSetCookieHeader(response) || '';
+
+    assert.equal(response.status, 200);
+    assert.match(setCookieHeader, /;\s*Secure(?:;|$)/);
 });
 
 test('production mode serves built frontend while preserving api routes', async t => {

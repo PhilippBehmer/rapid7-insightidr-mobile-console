@@ -17,14 +17,14 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const DEFAULT_CONFIG = Object.freeze({ apiKey: '', platformUserApiKey: '', region: 'us' });
-const CONFIG_FILE = process.env.IDR_CONFIG_FILE
-    ? path.resolve(process.env.IDR_CONFIG_FILE)
-    : path.join(__dirname, 'config.json');
+const CONFIG_FILE = process.env.POCKETSOC_CONFIG_FILE
+    ? path.resolve(process.env.POCKETSOC_CONFIG_FILE)
+    : path.join(__dirname, 'local', 'config.json');
 const SESSION_COOKIE_NAME = 'pocketsoc_session';
 const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
-const SESSION_SECRET_FILE = process.env.IDR_SESSION_SECRET_FILE
-    ? path.resolve(process.env.IDR_SESSION_SECRET_FILE)
-    : path.join(__dirname, 'session-secret.hex');
+const SESSION_SECRET_FILE = process.env.POCKETSOC_SESSION_SECRET_FILE
+    ? path.resolve(process.env.POCKETSOC_SESSION_SECRET_FILE)
+    : path.join(path.dirname(CONFIG_FILE), 'session-secret.hex');
 const requestContextStorage = new AsyncLocalStorage();
 const sessionRuntimeCaches = new Map();
 let mitreCatalogCache = null;
@@ -32,7 +32,7 @@ let mitreCatalogPromise = null;
 const DEFAULT_UPSTREAM_TIMEOUT_MS = 20000;
 const ATTACHMENT_UPLOAD_TIMEOUT_MS = 120000;
 const ATTACHMENT_UPLOAD_MAX_BYTES = (() => {
-    const parsed = Number(process.env.IDR_ATTACHMENT_MAX_BYTES);
+    const parsed = Number(process.env.POCKETSOC_ATTACHMENT_MAX_BYTES);
     return Number.isFinite(parsed) && parsed > 0
         ? Math.floor(parsed)
         : 25 * 1024 * 1024;
@@ -102,7 +102,7 @@ function normalizeSessionConfig(candidate = {}) {
 }
 
 function loadSessionEncryptionKey() {
-    const configuredSecret = String(process.env.IDR_SESSION_SECRET || '').trim();
+    const configuredSecret = String(process.env.POCKETSOC_SESSION_SECRET || '').trim();
     if (configuredSecret) {
         return crypto.createHash('sha256').update(configuredSecret).digest();
     }
@@ -347,7 +347,7 @@ function setSessionCookie(req, res, sessionId, expiresAt) {
         `Expires=${new Date(expiresAt).toUTCString()}`
     ];
 
-    if (requestUsesHttps(req) || String(process.env.IDR_FORCE_SECURE_COOKIE || '').toLowerCase() === 'true') {
+    if (requestUsesHttps(req) || String(process.env.POCKETSOC_FORCE_SECURE_COOKIE || '').toLowerCase() === 'true') {
         attributes.push('Secure');
     }
 
