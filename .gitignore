@@ -1,8 +1,4 @@
 # Local runtime config and secrets
-backend/config.json
-backend/config*.json
-backend/session-secret.hex
-backend/session-secret*.hex
 backend/local/
 .env
 .env.*

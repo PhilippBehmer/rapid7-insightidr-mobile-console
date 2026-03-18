@@ -8,10 +8,6 @@ backend/node_modules
 frontend/node_modules
 frontend/dist
 dist
-backend/config.json
-backend/config*.json
-backend/session-secret.hex
-backend/session-secret*.hex
 backend/local
 .env
 .env.*
