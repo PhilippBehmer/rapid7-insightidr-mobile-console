@@ -35,7 +35,7 @@ const ATTACHMENT_UPLOAD_MAX_BYTES = (() => {
     const parsed = Number(process.env.POCKETSOC_ATTACHMENT_MAX_BYTES);
     return Number.isFinite(parsed) && parsed > 0
         ? Math.floor(parsed)
-        : 25 * 1024 * 1024;
+        : 50 * 1000 * 1000;
 })();
 const ANALYST_DIRECTORY_TTL_MS = 5 * 60 * 1000;
 const LOGSET_NAME_TTL_MS = 30 * 60 * 1000;
