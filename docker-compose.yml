@@ -4,9 +4,11 @@ services:
     ports:
       - "${POCKETSOC_HOST_PORT:-3000}:3000"
     environment:
-      POCKETSOC_CONFIG_FILE: /app/data/config.json
+      POCKETSOC_CONFIG_FILE: ${POCKETSOC_CONFIG_FILE:-/app/data/config.json}
       POCKETSOC_SESSION_SECRET: ${POCKETSOC_SESSION_SECRET:-}
-      POCKETSOC_SESSION_SECRET_FILE: ${POCKETSOC_SESSION_SECRET_FILE:-}
+      POCKETSOC_SESSION_SECRET_FILE: ${POCKETSOC_SESSION_SECRET_FILE:-/app/data/session-secret.hex}
+      POCKETSOC_ATTACHMENT_MAX_BYTES: ${POCKETSOC_ATTACHMENT_MAX_BYTES:-50000000}
+      POCKETSOC_FORCE_SECURE_COOKIE: ${POCKETSOC_FORCE_SECURE_COOKIE:-}
     volumes:
       - pocketsoc-data:/app/data
     restart: unless-stopped
