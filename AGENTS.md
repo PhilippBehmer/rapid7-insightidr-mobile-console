@@ -14,7 +14,7 @@
 - `Dockerfile`: multi-stage production image that builds the Vite frontend, installs backend production dependencies, and serves the app from the backend on port `3000`.
 - `docker-compose.yml`: local container runtime example for the published Docker Hub image, with a named volume mounted at `/app/data` for persisted session state; the auto-generated session secret follows that same directory by default.
 - `.github/workflows/docker-publish.yml`: CI workflow that runs the backend/frontend checks on pull requests and publishes a multi-arch Docker Hub image on pushes to `main`.
-- `.env.example`: local environment template for optional overrides; PocketSOC already defaults persisted session state to `backend/local/`, the auto-generated secret follows that same directory by default, and backend `PORT` remains intentionally omitted because normal user flows should rely on the default internal port.
+- `.env.example`: local environment template for optional overrides; Docker Compose examples keep persisted session state under `/app/data` inside the container, while non-container runs still default to `backend/local/`; the auto-generated secret follows the chosen config path, and backend `PORT` remains intentionally omitted because normal user flows should rely on the default internal port.
 - `.gitignore` and `.dockerignore`: release hygiene files; keep custom session-state paths and local secrets ignored when examples or persistence paths change.
 - `frontend/main.js`: `MainApp` singleton, view templates, event wiring, fetch orchestration, overlay navigation, and client-side state.
 - `frontend/components.js`: HTML rendering helpers for lists, detail panels, badges, forms, and empty states.
@@ -29,6 +29,7 @@
 - The settings screen currently exposes only the primary `apiKey` plus `region`; `platformUserApiKey` remains backend-only legacy state until Rapid7 platform-user lookup behavior is clarified.
 - In production container runs, the Express backend serves the built frontend from `frontend/dist` on the same origin as `/api` when `NODE_ENV=production`.
 - `POCKETSOC_CONFIG_FILE` can override the default `backend/local/config.json` path for isolated local test runs.
+- `docker-compose.yml` now passes through `POCKETSOC_CONFIG_FILE`, `POCKETSOC_SESSION_SECRET_FILE`, `POCKETSOC_SESSION_SECRET`, `POCKETSOC_ATTACHMENT_MAX_BYTES`, and `POCKETSOC_FORCE_SECURE_COOKIE` from `.env`, with `/app/data/config.json`, `/app/data/session-secret.hex`, and `50000000` as the container-safe default config path, secret-file path, and attachment size cap.
 - `POCKETSOC_SESSION_SECRET_FILE` can override the generated-secret path explicitly; otherwise the backend writes `session-secret.hex` next to `POCKETSOC_CONFIG_FILE`.
 - `POCKETSOC_SESSION_SECRET` can provide the encryption secret for stored session configs; otherwise the backend generates a local secret file at the derived or overridden path.
 - `POCKETSOC_ATTACHMENT_MAX_BYTES` can cap proxied attachment uploads; the default is `50000000` (50 MB).
