@@ -17,8 +17,8 @@ PocketSOC delivers a fast, mobile-friendly way to access Rapid7 InsightIDR, help
 Clone the repository or download [docker-compose.yml](https://raw.githubusercontent.com/PhilippBehmer/rapid7-insightidr-mobile-console/refs/heads/main/docker-compose.yml).
 
 ```bash
-git clone https://github.com/philippbehmer/PocketSOC.git
-cd PocketSOC
+git clone https://github.com/PhilippBehmer/rapid7-insightidr-mobile-console.git
+cd rapid7-insightidr-mobile-console
 ```
 
 Start Docker Compose
